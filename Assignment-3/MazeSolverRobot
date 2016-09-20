@@ -1,0 +1,1139 @@
+.data
+	Array1:		.space 	100	#100 element Integer Array for row
+	Array2:		.space	100	#100 element Integer Array for column
+	arrayA: 	.space 	100	#the moves
+
+.text
+
+#There seems to be a problem only in the option 2 sometimes where there is a messup with the $a1.
+#Everything else seems to work fine. 
+#Designed for the 4x4 maze
+mainStat:
+	addi $s3, $zero, -2
+	jal preOpt
+	jal secondOp
+
+
+	jal main
+	jal main2
+	
+	jal getLength
+	addi $a1, $v0, 0
+	
+	jal secondOp
+	jal moveWest
+
+	addi $a0, $zero, 0
+	addi $a1, $zero, -1
+	addi $a2, $zero, 0
+	addi $a3, $zero, -1
+	
+	jal mazeSolver
+	li $v0, 10
+	syscall
+
+
+preOpt:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+
+	la $s0, Array1
+	la $s1, Array2
+	
+
+
+	addi $t0, $zero, -1
+	sb $t0, 0($s1)
+	addi $s0, $s0, 1
+	addi $s1, $s1, 1
+	addi $a1, $a1, 2
+	addi $a2, $a2, 1
+	jal moveForward
+	sll $t0, $t9, 4 #Stores the row
+	srl $t0, $t0, 28
+	sll $t0, $t0, 4
+	sll $t1, $t9, 12 #Stores the column
+	srl $t1, $t1, 28
+	add $t0, $t0, $t1
+	sb $t0, 0($s1)
+	
+	
+	addi $s1, $s1, 1
+	addi $a1, $a1, 1
+	addi $a2, $a2, 1
+	
+firstOption:	
+
+	
+	lui $t0, 0xFFFF
+	and $t0, $t9, $t0
+	beq $t0, 0x03040000, exit
+	jal checkSides1
+	sll $t0, $t9, 4 #Stores the row
+	srl $t0, $t0, 28
+	sll $t0, $t0, 4
+	sll $t1, $t9, 12 #Stores the column
+	srl $t1, $t1, 28
+	add $t0, $t0, $t1
+
+	sb $t0, 0($s1)
+
+	addi $s1, $s1, 1
+	addi $a1, $a1, 1
+	addi $a2, $a2, 1
+next:
+	beq $v0, 1, moveLeft
+	beq $v0, 2, moveForward
+	beq $v0, 3, moveRight
+	beq $v0, 4, moveBackward
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	sll $t0, $t9, 4 #Stores the row
+	srl $t0, $t0, 28
+	sll $t0, $t0, 4
+	sll $t1, $t9, 12 #Stores the column
+	srl $t1, $t1, 28
+	add $t0, $t0, $t1
+	sb $t0, 0($s1)
+	addi $s1, $s1, 1
+	addi $a1, $a1, 1
+	
+	jr $ra
+	
+checkSides1:
+	sll $t1, $t9, 29   #Checks the left side
+	srl $t1, $t1, 31
+	addi $t2, $zero, 1
+	beq $t1, 0, exit0
+	sll $t1, $t9, 28 #Checks the front of car
+	srl $t1, $t1, 31
+	addi $t2, $zero, 2
+	beq $t1, 0, exit0
+
+	#addi $t1, $zero, 2 #Checks right side
+	sll $t1, $t9, 30
+	srl $t1, $t1, 31
+	addi $t2, $zero, 3
+	beq $t1, 0, exit0
+	sll $t1, $t9, 31 #Checks back side
+	srl $t1, $t1, 31
+	addi $t2, $zero, 4
+	beq $t1, 0, exit0
+
+	
+exit:
+	lw $ra, 0($sp)
+	addi $ra, $ra, 4
+	jr $ra
+
+exit0:	addi $v0, $t2, 0
+	jr $ra
+	
+	
+	
+moveLeft:
+
+	addi $t8, $zero, 2
+wait1:	bne $t8, 0, wait1
+	addi $t8, $zero, 4
+wait2:	bne $t8, 0, wait2	
+	addi $t8, $zero, 1
+	j firstOption
+	
+moveRight:
+
+	addi $t8, $zero, 3
+wait3:	bne $t8, 0, wait3
+	addi $t8, $zero, 4
+wait4:	bne $t8, 0, wait4
+	addi $t8, $zero, 1
+	j firstOption
+	
+moveForward:
+
+	addi $t8, $zero, 1
+wait5:	bne $t8, 0, wait5
+	addi $t8, $zero, 4
+	j firstOption
+	
+moveBackward:
+	addi $t8, $zero, 3
+wait6:	bne $t8, $zero, wait6
+	addi $t8, $zero, 4
+wait7:	bne $t8, $zero, wait7
+	addi $t8, $zero, 3
+wait8:	bne $t8, 0, wait8
+	addi $t8, $zero, 1
+	j firstOption
+
+
+#ELIMINATE DUP!
+###############
+###############
+###############
+main:
+	la $a0, Array2
+	addi $a0, $a0, 8
+	lb $s0, 0($a0)
+	addi $a0, $a0, 1
+	lb $s1, 0($a0)
+	addi $a0, $a0, 1
+	lb $s2, 0($a0)
+	addi $a0, $a0, 1
+	lb $s3, 0($a0)
+	addi $a0, $a0, 1
+	lb $s4, 0($a0)
+	addi $a0, $a0, 1
+	lb $s5, 0($a0)
+	addi $a0, $a0, 1
+	lb $s6, 0($a0)
+	addi $a0, $a0, 1
+	lb $t0, 0($a0)
+	addi $a0, $a0, 1
+	lb $t1, 0($a0)
+	addi $a0, $a0, 1
+	lb $t2, 0($a0)
+	addi $a0, $a0, 1
+	lb $t3, 0($a0)
+	addi $a0, $a0, 1
+	lb $t4, 0($a0)
+	addi $a0, $a0, 1
+	lb $t5, 0($a0)
+	addi $a0, $a0, 1
+
+	
+	jr $ra
+	
+	
+main2:
+    addi $sp, $sp, -4
+    sw $ra,0($sp)
+    la  $a0,Array2    	# put address of array in $a0
+
+	add $s1, $zero, $a1				
+    jal eliminate   	# call the function
+    jal show
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    jr $ra
+
+eliminate: 
+	la $s3, Array2
+	la $s4, Array1	
+	li $t2,0#how much filled in Array1
+loop_Array2:
+    ble $s1,$0,done
+    li $t4,0 #t4 to loop over Array1
+    lb  $t3, 0($s3) #value at Array2 by index 
+    la $s2,Array1
+check_and_fill_array:#basically inner loop
+    bge $t4,$t2,fill_and_goto_next_iter
+    lb  $t5, 0($s2)
+    beq $t5,$t3,dont_fill_and_delete#if condition that we would have checked
+    addi $s2,$s2,1
+    addi $t4,$t4,1
+    b check_and_fill_array
+    
+fill_and_goto_next_iter:
+    sb $t3,0($s2)#store at current locaion
+    addi $t2,$t2,1
+    addi $s4,$s4,4#move to next memory location
+    addi    $s1,$s1,-1  # decrement count of outer for loop
+    addi    $s3,$s3,1   # advance pointer to next value for outer for loop
+    b loop_Array2
+
+        
+dont_fill_and_delete:
+    addi $s2,$s2,11
+    addi $t4,$t4,1
+    move $t7,$t2
+    bge $t4,$t7,deleted_continue
+    sb $0,0($s2)
+    addi $t2,$t2,-1
+    addi $t4,$t4,1
+    b dont_fill_and_delete
+    
+deleted_continue:
+    addi    $s1,$s1,-1  # decrement count of outer for loop
+    addi    $s3,$s3,1   # advance pointer to next value for outer for loop
+    b loop_Array2
+	
+done:
+	jr $ra
+	
+	
+show:
+	la $a0, Array1
+
+	lb $s0, 0($a0)
+	addi $a0, $a0, 1
+	lb $s1, 0($a0)
+	addi $a0, $a0, 1
+	lb $s2, 0($a0)
+	addi $a0, $a0, 1
+	lb $s3, 0($a0)
+	addi $a0, $a0, 1
+	lb $s4, 0($a0)
+	addi $a0, $a0, 1
+	lb $s5, 0($a0)
+	addi $a0, $a0, 1
+	lb $s6, 0($a0)
+	addi $a0, $a0, 1
+	lb $t0, 0($a0)
+	addi $a0, $a0, 1
+	lb $t1, 0($a0)
+	addi $a0, $a0, 1
+	lb $t2, 0($a0)
+	addi $a0, $a0, 1
+	lb $t3, 0($a0)
+	addi $a0, $a0, 1
+	lb $t4, 0($a0)
+	addi $a0, $a0, 1
+	lb $t5, 0($a0)
+	addi $a0, $a0, 1
+
+	jr $ra
+	
+
+##PART 2!!
+##########
+##########
+##########
+
+secondOp:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	jal moveWest
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	jal show
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+
+
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+
+	la $a0, Array1
+
+	add $t6, $zero, $a1
+	addi $t6, $t6, 1
+	add $a0, $a0, $t6
+
+	
+	
+	
+checkRep:
+
+	beq $t6, 1, exit2
+	sub $t6, $t6, 1
+	lb $t0, 0($a0)
+	sll $t1, $t0, 28
+	srl $t1, $t1, 28
+	srl $t0, $t0, 4
+	sub $a0, $a0, 1
+	lb $t2, 0($a0)
+	sll $t3, $t2, 28
+	srl $t3, $t3, 28
+	srl $t2, $t2, 4
+	beq $a1, -1, exit2
+	slt $t4, $t2, $t0
+	bne $t4, 1, West
+	jal moveNorth
+	
+
+West:	
+	slt $t4, $t3, $t1
+	bne $t4, 1, South
+	jal moveWest
+	
+
+South:	
+	slt $t4, $t0, $t2
+	bne $t4, 1, East
+	jal moveSouth
+
+East:
+	slt $t4, $t1, $t3
+	bne $t4, 1, checkRep
+	jal moveEast
+
+	j checkRep
+moveNorth:
+	andi $t7, $t9, 0x00000800
+	beq $t7, 0x00000800, mvNorthU
+	andi $t7, $t9, 0x00000400
+	beq $t7, 0x00000400, mvNorthR
+	andi $t7, $t9, 0x00000200
+	beq $t7, 0x00000200, mvNorthD
+	andi $t7, $t9, 0x00000100
+	beq $t7, 0x00000100, mvNorthL
+	j exit1
+	
+mvNorthU:
+	addi $t8, $zero, 1
+	jr $ra
+	
+mvNorthR:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvNorthD:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+		
+mvNorthL:	
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+moveEast:
+	andi $t7, $t9, 0x00000800
+	beq $t7, 0x00000800, mvEastU
+	andi $t7, $t9, 0x00000400
+	beq $t7, 0x00000400, mvEastR
+	andi $t7, $t9, 0x00000200
+	beq $t7, 0x00000200, mvEastD
+	andi $t7, $t9, 0x00000100
+	beq $t7, 0x00000100, mvEastL
+	j exit1
+	
+mvEastU:
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+
+mvEastR:	
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvEastD:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+		
+mvEastL:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+moveSouth:
+	andi $t7, $t9, 0x00000800
+	beq $t7, 0x00000800, mvSouthU
+	andi $t7, $t9, 0x00000400
+	beq $t7, 0x00000400, mvSouthR
+	andi $t7, $t9, 0x00000200
+	beq $t7, 0x00000200, mvSouthD
+	andi $t7, $t9, 0x00000100
+	beq $t7, 0x00000100, mvSouthL
+	j exit1
+	
+mvSouthU:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+mvSouthR:	
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvSouthD:
+	addi $t8, $zero, 1
+	jr $ra	
+		
+mvSouthL:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+	
+moveWest:
+	andi $t7, $t9, 0x00000800
+	beq $t7, 0x00000800, mvWestU
+	andi $t7, $t9, 0x00000400
+	beq $t7, 0x00000400, mvWestR
+	andi $t7, $t9, 0x00000200
+	beq $t7, 0x00000200, mvWestD
+	andi $t7, $t9, 0x00000100
+	beq $t7, 0x00000100, mvWestL
+	j exit1
+	
+mvWestU:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+	
+mvWestR:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvWestD:
+	#addi $t1, $zero, 2 #Checks right side
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+mvWestL:	
+	addi $t8, $zero, 1
+	jr $ra	
+
+	
+
+exit1:
+	addi $v0, $zero, 2
+	jr $ra
+	
+	
+	
+	
+	
+	
+	
+	
+exit2:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+	
+	
+	
+#RECURSION
+##########
+##########
+##########
+	
+mazeSolver:
+	addi $t8, $zero, 4
+	bne $a0, 3, else
+	bne $a1, 4, else
+	addi $v0, $zero, 1
+	jr $ra
+else:
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	jal ifNorth2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $a0, $a0, -1
+	bne $v0, 1, if2
+	beq $a2, $a0, if2
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+
+	jal moveNorth2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	addi $a3, $a1, 0
+	addi $a2, $a0, 1
+	
+	jal mazeSolver
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	bne $v0, 1, else2
+	jr $ra
+	
+else2:
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	addi $a2, $a2, 1
+	jal moveSouth2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	
+if2:
+	addi $a0, $a0, 1
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	jal ifWest2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $a1, $a1, -1
+	bne $v0, 1, if3
+	beq $a3, $a1, if3
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	jal moveWest2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	addi $a3, $a1, 1
+	addi $a2, $a0, 0
+	jal mazeSolver
+	addi $a3, $a3, -1
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	bne $v0, 1, else3
+	jr $ra
+	
+else3:
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	addi $a2, $a2, 1
+	jal moveEast2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	
+if3:
+	addi $a1, $a1, 1
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	jal ifSouth2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $a0, $a0, 1
+	bne $v0, 1, if4
+	beq $a2, $a0, if4
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	jal moveSouth2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	addi $a3, $a1, 0
+	addi $a2, $a0, -1
+	jal mazeSolver
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	bne $v0, 1, else4
+	jr $ra
+	
+else4:
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	addi $a2, $a2, 1
+	jal moveNorth2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	
+
+if4:
+	addi $a0, $a0, -1
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	jal ifEast2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $a1, $a1, 1
+	bne $v0, 1, returnF
+	beq $a3, $a1, returnF
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	
+	jal moveEast2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	addi $a3, $a1, -1
+	addi $a2, $a0, 0
+	jal mazeSolver
+	addi $a3, $a3, -1
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	bne $v0, 1, else5
+	jr $ra
+	
+else5:
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $a1, 8($sp)
+	sw $a2, 12($sp)
+	sw $a3, 16($sp)
+	addi $a2, $a2, 1
+	jal moveWest2
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $a1, 8($sp)
+	lw $a2, 12($sp)
+	lw $a3, 16($sp)
+	addi $sp, $sp, 24
+	
+returnF:
+	addi $v0, $zero, 2
+	jr $ra
+	
+
+	
+ifNorth2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, ifNorthU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, ifNorthR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, ifNorthD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, ifNorthL2
+	
+ifNorthU2:
+	sll $t1, $t9, 28 #Checks the front of car
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+	
+ifNorthR2:	
+	addi $t5, $zero, 2
+	sll $t1, $t9, 29   #Checks the left side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra	
+
+ifNorthD2:
+	sll $t1, $t9, 31 #Checks back side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+		
+ifNorthL2:	
+	sll $t1, $t9, 30
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra	
+	
+ifEast2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, ifEastU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, ifEastR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, ifEastD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, ifEastL2
+	
+ifEastU2:
+	sll $t1, $t9, 30
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+
+ifEastR2:	
+	sll $t1, $t9, 28 #Checks the front of car
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra	
+
+ifEastD2:
+	sll $t1, $t9, 29   #Checks the left side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+		
+ifEastL2:	
+	sll $t1, $t9, 31 #Checks back side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra	
+	
+ifSouth2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, ifSouthU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, ifSouthR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, ifSouthD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, ifSouthL2
+	
+ifSouthU2:
+	sll $t1, $t9, 31 #Checks back side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+	
+ifSouthR2:	
+	sll $t1, $t9, 30
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra	
+
+ifSouthD2:
+	sll $t1, $t9, 28 #Checks the front of car
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+		
+ifSouthL2:	
+	sll $t1, $t9, 29   #Checks the left side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra	
+	
+ifWest2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, ifWestU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, ifWestR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, ifWestD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, ifWestL2
+	
+ifWestU2:
+	sll $t1, $t9, 29   #Checks the left side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+	
+ifWestR2:	
+	sll $t1, $t9, 31 #Checks back side
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra	
+
+ifWestD2:
+	#addi $t1, $zero, 2 #Checks right side
+	sll $t1, $t9, 30
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+	
+ifWestL2:	
+	sll $t1, $t9, 28 #Checks the front of car
+	srl $t1, $t1, 31
+	beq $t1, 1, exit3
+	addi $v0, $zero, 1
+	jr $ra
+	
+
+	
+moveNorth2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, mvNorthU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, mvNorthR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, mvNorthD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, mvNorthL2
+	j exit3
+	
+mvNorthU2:
+	addi $t8, $zero, 1
+	jr $ra
+	
+mvNorthR2:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvNorthD2:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+		
+mvNorthL2:	
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+moveEast2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, mvEastU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, mvEastR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, mvEastD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, mvEastL2
+	j exit3
+	
+mvEastU2:
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+
+mvEastR2:	
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvEastD2:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+		
+mvEastL2:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+moveSouth2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, mvSouthU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, mvSouthR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, mvSouthD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, mvSouthL2
+	j exit3
+	
+mvSouthU2:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+mvSouthR2:	
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvSouthD2:
+	addi $t8, $zero, 1
+	jr $ra	
+		
+mvSouthL2:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+	
+moveWest2:
+	andi $t2, $t9, 0x00000800
+	beq $t2, 0x00000800, mvWestU2
+	andi $t2, $t9, 0x00000400
+	beq $t2, 0x00000400, mvWestR2
+	andi $t2, $t9, 0x00000200
+	beq $t2, 0x00000200, mvWestD2
+	andi $t2, $t9, 0x00000100
+	beq $t2, 0x00000100, mvWestL2
+	j exit3
+	
+mvWestU2:
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra
+	
+mvWestR2:	
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 2
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+
+mvWestD2:
+	#addi $t1, $zero, 2 #Checks right side
+	addi $t8, $zero, 3
+	addi $t8, $zero, 4
+	addi $t8, $zero, 1
+	jr $ra	
+	
+mvWestL2:	
+	addi $t8, $zero, 1
+	jr $ra	
+
+	
+
+exit3:
+	addi $v0, $zero, 2
+	jr $ra
+	
+	
+
+getLength:
+	la $a0, Array1
+	addi $v0, $zero, 0
+comeBkk:
+	addi $v0, $v0, 1
+	lb $t0, 0($a0)
+	addi $a0, $a0, 1
+	bne $t0, 34, comeBkk
+	jr $ra
+	
+	
+	
+	
+	
+	
+	
+	
